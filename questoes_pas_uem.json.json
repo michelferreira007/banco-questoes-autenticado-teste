@@ -1,8 +1,19 @@
-{
-  "compilerOptions": {
-    "baseUrl": "./",
-    "paths": {
-      "@/*": ["src/*"]
-    }
+[
+  {
+    "ano": 2021,
+    "prova": "UEM PAS - Etapa 3",
+    "materia": "Biologia",
+    "numero_questao": 28,
+    "enunciado": "Sobre o processo de divisão celular por mitose, assinale o que for correto.",
+    "imagem": null,
+    "afirmativas": [
+      { "numero": "01", "texto": "É um processo de divisão celular que ocorre apenas em organismos com reprodução sexuada.", "correta": false },
+      { "numero": "02", "texto": "A mitose é um processo equacional, pois as células-filhas têm o mesmo número de cromossomos que a célula-mãe.", "correta": true },
+      { "numero": "04", "texto": "A interfase, período que antecede a mitose, é caracterizada pela baixa atividade metabólica da célula.", "correta": false },
+      { "numero": "08", "texto": "Na anáfase, ocorre a separação das cromátides-irmãs, que migram para os polos opostos da célula.", "correta": true },
+      { "numero": "16", "texto": "A mitose é fundamental para o crescimento dos organismos multicelulares e para a renovação de tecidos.", "correta": true }
+    ],
+    "resposta_soma": 26,
+    "resolucao": "As afirmativas corretas são a 02, 08 e 16. A soma é 2 + 8 + 16 = 26. A afirmativa 01 está incorreta porque a mitose ocorre em todos os organismos multicelulares para crescimento e reparo. A afirmativa 04 está incorreta porque a interfase é um período de intensa atividade metabólica e duplicação do DNA."
   }
-}
+]

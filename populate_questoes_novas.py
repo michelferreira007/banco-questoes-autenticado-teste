@@ -1,65 +1,70 @@
 import json
-import sys
 import os
+import traceback
+from sqlalchemy import create_engine, text
 
-# Adicionar o diretório src ao path
-sys.path.append(os.path.join(os.path.dirname(__file__), 'src'))
+print("--- INICIANDO SCRIPT populate_questoes_novas.py (VERSÃO SOMATÓRIA) ---")
 
-from src.main import app
-from src.models.user import db
-from src.models.questao_nova import QuestaoNova
+try:
+    print("Tentando conectar ao banco de dados...")
+    database_url = os.getenv('DATABASE_URL')
+    if not database_url:
+        raise ValueError("Erro Crítico: Variável de ambiente DATABASE_URL não encontrada.")
+    
+    if database_url.startswith("postgres://"):
+        database_url = database_url.replace("postgres://", "postgresql://", 1)
+        print("URL do banco de dados corrigida para usar 'postgresql://'")
 
-def popular_questoes_novas():
-    with app.app_context():
-        # Criar as tabelas se não existirem
-        db.create_all()
+    engine = create_engine(database_url)
+    
+    with engine.connect() as connection:
+        print("Conexão com o banco de dados bem-sucedida!")
+
+        print("Tentando ler o arquivo JSON 'questoes_pas_uem.json'...")
+        json_file_path = 'questoes_pas_uem.json'
+        with open(json_file_path, 'r', encoding='utf-8') as f:
+            questoes = json.load(f)
+        print(f"Arquivo JSON lido com sucesso. Encontradas {len(questoes)} questões.")
+
+        print("Limpando a tabela 'questoes_pas_uem' para evitar duplicatas...")
+        connection.execute(text("DROP TABLE IF EXISTS questoes_pas_uem CASCADE;"))
+        print("Tabela antiga removida (se existia). O sistema irá recriá-la.")
         
-        # Carregar questões do arquivo JSON
-        with open('../questoes_pas_uem.json', 'r', encoding='utf-8') as f:
-            questoes_data = json.load(f)
-        
-        print(f"Carregando {len(questoes_data)} questões...")
-        
-        for questao_data in questoes_data:
-            # Verificar se a questão já existe
-            questao_existente = QuestaoNova.query.filter_by(
-                vestibular=questao_data['vestibular'],
-                ano=questao_data['ano'],
-                numero=questao_data['numero']
-            ).first()
+        # O Flask (db.create_all) irá recriar a tabela com a nova estrutura no deploy.
+        # Este script apenas insere os dados após a recriação.
+
+        print("Iniciando a inserção das questões no banco de dados...")
+        for questao in questoes:
+            afirmativas_json = json.dumps(questao['afirmativas'])
+
+            stmt = text("""
+                INSERT INTO questoes_pas_uem (ano, prova, materia, numero_questao, enunciado, imagem, afirmativas, resposta_soma, resolucao)
+                VALUES (:ano, :prova, :materia, :numero_questao, :enunciado, :imagem, :afirmativas, :resposta_soma, :resolucao)
+            """)
             
-            if questao_existente:
-                print(f"Questão {questao_data['numero']} já existe, pulando...")
-                continue
-            
-            # Criar nova questão
-            nova_questao = QuestaoNova(
-                vestibular=questao_data['vestibular'],
-                ano=questao_data['ano'],
-                etapa=questao_data.get('etapa'),
-                numero=questao_data['numero'],
-                materia=questao_data['materia'],
-                assunto=questao_data.get('assunto'),
-                enunciado=questao_data['enunciado'],
-                alternativas=questao_data['alternativas'],
-                alternativas_numeracao=questao_data['alternativas_numeracao'],
-                resposta_correta=questao_data['resposta_correta'],
-                alternativas_corretas=questao_data['alternativas_corretas'],
-                explicacao=questao_data.get('explicacao'),
-                dificuldade=questao_data.get('dificuldade', 'Média')
-            )
-            
-            db.session.add(nova_questao)
-            print(f"Adicionada questão {questao_data['numero']}: {questao_data['materia']}")
+            connection.execute(stmt, parameters={
+                "ano": questao['ano'],
+                "prova": questao['prova'],
+                "materia": questao['materia'],
+                "numero_questao": questao['numero_questao'],
+                "enunciado": questao['enunciado'],
+                "imagem": questao.get('imagem'),
+                "afirmativas": afirmativas_json,
+                "resposta_soma": questao['resposta_soma'],
+                "resolucao": questao.get('resolucao')
+            })
         
-        # Salvar no banco
-        db.session.commit()
-        print("Questões populadas com sucesso!")
-        
-        # Mostrar estatísticas
-        total_questoes = QuestaoNova.query.count()
-        print(f"Total de questões no banco: {total_questoes}")
+        connection.commit()
+        print(f"SUCESSO! {len(questoes)} questões de somatória foram inseridas no banco de dados.")
 
-if __name__ == '__main__':
-    popular_questoes_novas()
+except Exception as e:
+    print("\n" + "="*80)
+    print("!!!!!!!!!!!!!! OCORREU UM ERRO !!!!!!!!!!!!!!")
+    print(f"TIPO DE ERRO: {type(e).__name__}")
+    print(f"MENSAGEM DO ERRO: {e}")
+    print("\n--- RASTREAMENTO COMPLETO DO ERRO (Traceback) ---")
+    traceback.print_exc()
+    print("="*80 + "\n")
 
+finally:
+    print("--- FIM DO SCRIPT populate_questoes_novas.py ---")
