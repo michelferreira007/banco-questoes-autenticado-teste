@@ -1,20 +1,28 @@
 from flask import Blueprint, jsonify
-from src.models.questao_nova import QuestaoNova
+from ..models.questao_nova import QuestaoNova
 
-questoes_pas_uem_bp = Blueprint('questoes_pas_uem', __name__)
+# Cria o Blueprint (um conjunto de rotas)
+questoes_pas_uem_bp = Blueprint('questoes_pas_uem_bp', __name__)
 
 @questoes_pas_uem_bp.route('/api/questoes_pas_uem', methods=['GET'])
-def listar_questoes_pas_uem():
-    """Listar todas as questões do PAS UEM sem paginação para compatibilidade com o frontend"""
+def get_questoes():
+    """
+    Este é o endpoint que o seu frontend chama.
+    Ele busca as questões no banco de dados e as envia como JSON.
+    """
     try:
-        # Buscar todas as questões do PAS UEM
-        questoes = QuestaoNova.query.filter_by(vestibular='PAS-UEM').order_by(QuestaoNova.numero.asc()).all()
+        # 1. Busca todas as questões no banco de dados.
+        questoes = QuestaoNova.query.all()
         
-        # Converter para dicionário
-        questoes_dict = [questao.to_dict() for questao in questoes]
+        # 2. Converte cada objeto de questão em um dicionário (formato JSON amigável).
+        #    É aqui que a "mágica" do nosso método to_dict() acontece.
+        #    Esta linha corrige o erro 500 que vimos no log.
+        resultado = [q.to_dict() for q in questoes]
         
-        return jsonify(questoes_dict)
+        # 3. Envia a lista de questões como uma resposta JSON bem-sucedida.
+        return jsonify(resultado)
         
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
+        # Se algo der errado, imprime o erro no log do Render e envia uma resposta de erro.
+        print(f"ERRO NA ROTA /api/questoes_pas_uem: {e}")
+        return jsonify({"error": "Ocorreu um erro interno ao buscar as questões.", "details": str(e)}), 500
