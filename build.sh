@@ -5,10 +5,9 @@ set -o errexit
 echo "Instalando dependências do Python..."
 pip install -r requirements.txt
 
-echo "Instalando Node.js e dependências do frontend..."
-# (O build do frontend continua igual)
-npm install -g pnpm
+echo "Instalando e fazendo build do frontend..."
 cd frontend
+npm install -g pnpm
 pnpm install
 pnpm build
 cp -r dist/. ../src/static/
@@ -16,12 +15,11 @@ cd ..
 echo "Build do frontend concluído!"
 
 echo "--- INICIANDO COMANDOS DO BANCO DE DADOS ---"
-# Garante que as tabelas sejam criadas/atualizadas ANTES de qualquer outra coisa.
-# O comando 'flask db upgrade' é o responsável por criar as tabelas.
+# Este comando CRIA a tabela antes de tudo.
 flask db upgrade
 
 echo "--- EXECUTANDO SCRIPT PARA POPULAR O BANCO DE DADOS ---"
-# Agora, com a certeza de que a tabela existe, executamos o script.
+# Este comando INSERE os dados na tabela que acabou de ser criada.
 python populate_questoes_novas.py
 
 echo "Build concluído com sucesso!"

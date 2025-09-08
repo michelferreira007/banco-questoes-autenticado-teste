@@ -13,7 +13,6 @@ try:
     
     if database_url.startswith("postgres://"):
         database_url = database_url.replace("postgres://", "postgresql://", 1)
-        print("URL do banco de dados corrigida para usar 'postgresql://'")
 
     engine = create_engine(database_url)
     
@@ -26,15 +25,9 @@ try:
             questoes = json.load(f)
         print(f"Arquivo JSON lido com sucesso. Encontradas {len(questoes)} questões.")
 
-        print("Limpando a tabela 'questoes_pas_uem' para evitar duplicatas...")
-        connection.execute(text("DROP TABLE IF EXISTS questoes_pas_uem CASCADE;"))
-        print("Tabela antiga removida (se existia). O sistema irá recriá-la.")
-        
-        # O Flask (db.create_all) irá recriar a tabela com a nova estrutura no deploy.
-        # Este script apenas insere os dados após a recriação.
-
         print("Iniciando a inserção das questões no banco de dados...")
         for questao in questoes:
+            # Converte a lista de afirmativas em uma string JSON para armazenamento
             afirmativas_json = json.dumps(questao['afirmativas'])
 
             stmt = text("""
@@ -49,7 +42,7 @@ try:
                 "numero_questao": questao['numero_questao'],
                 "enunciado": questao['enunciado'],
                 "imagem": questao.get('imagem'),
-                "afirmativas": afirmativas_json,
+                "afirmativas": afirmativas_json, # Passa a string JSON
                 "resposta_soma": questao['resposta_soma'],
                 "resolucao": questao.get('resolucao')
             })
