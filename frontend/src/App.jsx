@@ -1,9 +1,9 @@
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 
-// Importando os blocos de construção que criamos
-import Header from './components/Header';
-import QuestoesPage from './pages/QuestoesPage';
+// Importando os componentes que criamos
+import Header from './components/Header.jsx'; // <-- A CORREÇÃO ESTÁ AQUI!
+import QuestoesPage from './pages/QuestoesPage.jsx'; // Adicionei .jsx aqui também por segurança
 
 // Criando páginas temporárias para marcar o lugar
 function HomePage() {
@@ -17,10 +17,9 @@ function LoginPage() {
 // O App agora só organiza o layout e as rotas.
 function App() {
   return (
-    <>
-      <Header /> {/* O cabeçalho aparece em todas as páginas */}
+    <> {/* Usamos um fragmento <>...</> para não adicionar divs desnecessárias */}
+      <Header />
       <main>
-        {/* O Routes decide qual página mostrar */}
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/questoes" element={<QuestoesPage />} />
