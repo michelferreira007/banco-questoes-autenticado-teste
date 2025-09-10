@@ -1,5 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import Sidebar from '../components/Sidebar.jsx'; // Importamos nossa nova Sidebar
+import Sidebar from '../components/Sidebar.jsx';
+
+// Função auxiliar para parsear o JSON de forma segura
+const parseJsonSafely = (jsonString) => {
+  // Se a string for nula, vazia ou não for uma string, retorna um array vazio
+  if (!jsonString || typeof jsonString !== 'string') {
+    return [];
+  }
+  try {
+    // Tenta parsear o JSON
+    return JSON.parse(jsonString);
+  } catch (error) {
+    // Se der erro no parse, loga o erro no console e retorna um array vazio
+    console.error("Erro ao parsear JSON da afirmativa:", error, "String original:", jsonString);
+    return [];
+  }
+};
 
 function QuestoesPage() {
   const [questoes, setQuestoes] = useState([]);
@@ -25,10 +41,9 @@ function QuestoesPage() {
   }, []);
 
   return (
-    <div className="flex"> {/* Container principal que coloca os itens lado a lado */}
-      <Sidebar /> {/* Nossa nova barra lateral */}
+    <div className="flex">
+      <Sidebar />
       
-      {/* Área de conteúdo principal */}
       <div className="flex-1 p-8">
         <h1 className="text-3xl font-bold mb-6">Banco de Questões - UEM (Somatória)</h1>
         
@@ -37,28 +52,32 @@ function QuestoesPage() {
         
         {!loading && !error && (
           <div className="space-y-6">
-            {questoes.map((questao) => (
-              // Este é o "Card" da questão, inspirado nas suas referências
-              <div key={questao.id} className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
-                <h2 className="text-xl font-semibold mb-2">
-                  Questão {questao.numero_questao} ({questao.materia} - {questao.ano})
-                </h2>
-                <p className="text-gray-700 mb-4">{questao.enunciado}</p>
-                
-                <div className="space-y-2 mb-4">
-                  {JSON.parse(questao.afirmativas).map((item) => (
-                    <p key={item.numero} className="text-gray-600">
-                      <strong>{item.numero})</strong> {item.texto}
-                    </p>
-                  ))}
-                </div>
+            {questoes.map((questao) => {
+              // Usamos nossa função segura para parsear as afirmativas
+              const afirmativas = parseJsonSafely(questao.afirmativas);
 
-                <div className="bg-gray-50 p-4 rounded-md">
-                  <p><strong>Soma correta:</strong> {questao.resposta_soma}</p>
-                  <p className="mt-2"><strong>Resolução:</strong> {questao.resolucao}</p>
+              return (
+                <div key={questao.id} className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
+                  <h2 className="text-xl font-semibold mb-2">
+                    Questão {questao.numero_questao} ({questao.materia} - {questao.ano})
+                  </h2>
+                  <p className="text-gray-700 mb-4">{questao.enunciado}</p>
+                  
+                  <div className="space-y-2 mb-4">
+                    {afirmativas.map((item) => (
+                      <p key={item.numero} className="text-gray-600">
+                        <strong>{item.numero})</strong> {item.texto}
+                      </p>
+                    ))}
+                  </div>
+
+                  <div className="bg-gray-50 p-4 rounded-md">
+                    <p><strong>Soma correta:</strong> {questao.resposta_soma}</p>
+                    <p className="mt-2"><strong>Resolução:</strong> {questao.resolucao}</p>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
